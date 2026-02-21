@@ -62,9 +62,9 @@ msg() {
             [[ "$LANG_CHOICE" == "zh" ]] && echo "更新系统软件源" || echo "Updating package sources" ;;
         step_install_deps)
             [[ "$LANG_CHOICE" == "zh" ]] && echo "安装编译环境及驱动工具链" || echo "Installing build environment and driver toolchain" ;;
-        step_clone)
-            [[ "$LANG_CHOICE" == "zh" ]] && echo "获取 i915-sriov-dkms 驱动源码 (分支: $1)" \
-                || echo "Fetching i915-sriov-dkms source (branch: $1)" ;;
+        step_download)
+            [[ "$LANG_CHOICE" == "zh" ]] && echo "下载 i915-sriov-dkms 驱动源码 (版本: $1)" \
+                || echo "Downloading i915-sriov-dkms source (release: $1)" ;;
         step_dkms_add)
             [[ "$LANG_CHOICE" == "zh" ]] && echo "注册 DKMS 模块" || echo "Registering DKMS module" ;;
         step_dkms_build)
@@ -225,7 +225,7 @@ echo ""
 
 export DEBIAN_FRONTEND=noninteractive
 run_with_spinner "$(msg step_update_apt)" apt update -y
-run_with_spinner "$(msg step_install_deps)" apt install -y git build-essential dkms linux-headers-"$(uname -r)" intel-media-va-driver-non-free vainfo intel-gpu-tools ffmpeg
+run_with_spinner "$(msg step_install_deps)" apt install -y curl build-essential dkms linux-headers-"$(uname -r)" intel-media-va-driver-non-free vainfo intel-gpu-tools ffmpeg
 
 if dkms status | grep -q "i915-sriov-dkms"; then
     print_warn "$(msg warn_dkms_cleanup)"
@@ -237,10 +237,10 @@ if dkms status | grep -q "i915-sriov-dkms"; then
 fi
 
 WORK_DIR=$(mktemp -d)
-cd "$WORK_DIR"
-run_with_spinner "$(msg step_clone "$BRANCH")" git clone -b "$BRANCH" https://github.com/strongtz/i915-sriov-dkms.git
-cd i915-sriov-dkms
-cp -a . /usr/src/i915-sriov-dkms-"$BRANCH"
+TARBALL_URL="https://github.com/strongtz/i915-sriov-dkms/archive/refs/tags/$BRANCH.tar.gz"
+run_with_spinner "$(msg step_download "$BRANCH")" curl -fsSL "$TARBALL_URL" -o "$WORK_DIR/i915-sriov-dkms.tar.gz"
+tar -xzf "$WORK_DIR/i915-sriov-dkms.tar.gz" -C "$WORK_DIR"
+cp -a "$WORK_DIR/i915-sriov-dkms-$BRANCH/." /usr/src/i915-sriov-dkms-"$BRANCH"
 
 patch_source() {
     local target="/usr/src/i915-sriov-dkms-$BRANCH/drivers/gpu/drm/i915/display/dvo_ch7017.c"
