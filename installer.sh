@@ -227,14 +227,14 @@ export DEBIAN_FRONTEND=noninteractive
 run_with_spinner "$(msg step_update_apt)" apt update -y
 run_with_spinner "$(msg step_install_deps)" apt install -y curl build-essential dkms linux-headers-"$(uname -r)" intel-media-va-driver-non-free vainfo intel-gpu-tools ffmpeg
 
-if dkms status | grep -q "i915-sriov-dkms"; then
+if dkms status 2>/dev/null | grep -q "i915-sriov-dkms"; then
     print_warn "$(msg warn_dkms_cleanup)"
     OLD_VERSIONS=$(dkms status | grep "i915-sriov-dkms" | awk '{print $2}' | tr -d ',:')
     for OV in $OLD_VERSIONS; do
         dkms remove -m i915-sriov-dkms -v "$OV" --all >> "$LOG_FILE" 2>&1 || true
     done
-    rm -rf /usr/src/i915-sriov-dkms-*
 fi
+rm -rf /usr/src/i915-sriov-dkms-* /var/lib/dkms/i915-sriov-dkms/
 
 WORK_DIR=$(mktemp -d)
 TARBALL_URL="https://github.com/strongtz/i915-sriov-dkms/archive/refs/tags/$BRANCH.tar.gz"
@@ -245,7 +245,7 @@ cp -a "$WORK_DIR/i915-sriov-dkms-$BRANCH/." /usr/src/i915-sriov-dkms-"$BRANCH"
 patch_source() {
     local target="/usr/src/i915-sriov-dkms-$BRANCH/drivers/gpu/drm/i915/display/dvo_ch7017.c"
     if [ -f "$target" ] && ! grep -q '#include <linux/i2c.h>' "$target"; then
-        sed -i '/#include/a #include <linux/i2c.h>' "$target"
+        sed -i '0,/#include/{s|#include|#include <linux/i2c.h>\n#include|}' "$target"
     fi
     return 0
 }
