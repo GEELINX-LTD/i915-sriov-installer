@@ -1,6 +1,7 @@
 # i915-sriov-installer
 
-One-click Intel i915 SR-IOV vGPU driver installer for Ubuntu VPS instances.
+One-click Intel i915 SR-IOV vGPU driver installer for Ubuntu VPS instances.  
+Supports **English** and **中文** interface.
 
 ## Background
 
@@ -14,6 +15,7 @@ However, tenants who manually install or misconfigure GPU drivers inside their V
 |---|---|
 | **OS** | Ubuntu 24.04 (or other APT-based distributions) |
 | **Kernel** | Linux 6.8 – 6.19 |
+| **GPU** | Intel integrated/discrete GPU (vendor `8086`) must be present |
 | **Privileges** | Root (`sudo`) |
 | **Network** | Internet access (for package installation and source retrieval) |
 
@@ -30,13 +32,15 @@ sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/GEELINX-LTD/i915-sr
 
 The installer performs the following steps automatically:
 
-1. **Kernel Detection** — Identifies the running kernel version and selects the appropriate driver branch.
-2. **Dependency Installation** — Installs build tools, DKMS, kernel headers, and Intel media packages (`intel-media-va-driver-non-free`, `vainfo`, `intel-gpu-tools`, `ffmpeg`).
-3. **Cleanup** — Removes any previously installed `i915-sriov-dkms` modules to avoid conflicts.
-4. **Source Retrieval** — Clones the [i915-sriov-dkms](https://github.com/strongtz/i915-sriov-dkms) repository at the matched branch.
-5. **DKMS Build & Install** — Registers, compiles, and installs the kernel module via DKMS.
-6. **Initramfs Rebuild** — Updates the boot image to include the new driver.
-7. **Reboot Prompt** — Offers to reboot the system to activate the driver.
+1. **Language Selection** — Prompts the user to choose English or Chinese for all subsequent output.
+2. **Pre-flight Checks** — Verifies root privileges, APT availability, and Intel GPU presence via `lspci`.
+3. **Kernel Detection** — Identifies the running kernel version and selects the appropriate driver branch.
+4. **Dependency Installation** — Installs build tools, DKMS, kernel headers, and Intel media packages (`intel-media-va-driver-non-free`, `vainfo`, `intel-gpu-tools`, `ffmpeg`).
+5. **Cleanup** — Removes any previously installed `i915-sriov-dkms` modules to avoid conflicts.
+6. **Source Retrieval** — Clones the [i915-sriov-dkms](https://github.com/strongtz/i915-sriov-dkms) repository at the matched branch.
+7. **DKMS Build & Install** — Registers, compiles, and installs the kernel module via DKMS.
+8. **Initramfs Rebuild** — Updates the boot image to include the new driver.
+9. **Reboot Prompt** — Offers to reboot the system to activate the driver.
 
 ### Kernel Branch Mapping
 
