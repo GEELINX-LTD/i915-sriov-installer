@@ -41,6 +41,9 @@ msg() {
         err_kernel_minor)
             [[ "$LANG_CHOICE" == "zh" ]] && echo "不受支持的内核子版本 ($1)。要求 6.8 – 6.19。" \
                 || echo "Unsupported kernel minor version ($1). Required: 6.8 – 6.19." ;;
+        err_cloud_kernel)
+            [[ "$LANG_CHOICE" == "zh" ]] && echo "不支持 cloud 内核变体 ($1)。请使用标准内核 (generic/amd64)。" \
+                || echo "Cloud kernel variant not supported ($1). Please use a standard kernel (generic/amd64)." ;;
         err_fail_suffix)
             [[ "$LANG_CHOICE" == "zh" ]] && echo "失败" || echo "failed" ;;
         log_detail)
@@ -72,8 +75,6 @@ msg() {
                 || echo "Compiling kernel driver module (estimated 3–5 min)" ;;
         step_dkms_install)
             [[ "$LANG_CHOICE" == "zh" ]] && echo "安装 DKMS 驱动模块" || echo "Installing DKMS driver module" ;;
-        step_patch)
-            [[ "$LANG_CHOICE" == "zh" ]] && echo "修补源码兼容性补丁" || echo "Applying source compatibility patches" ;;
         step_initramfs)
             [[ "$LANG_CHOICE" == "zh" ]] && echo "重建 initramfs 引导镜像" || echo "Rebuilding initramfs boot image" ;;
         warn_dkms_cleanup)
@@ -207,6 +208,10 @@ KERNEL_MINOR=$(echo "$KERNEL_FULL" | cut -d'.' -f2)
 
 print_info "$(msg info_kernel "$KERNEL_FULL")"
 
+if echo "$KERNEL_FULL" | grep -qi "cloud"; then
+    print_error "$(msg err_cloud_kernel "$KERNEL_FULL")"
+fi
+
 if [ "$KERNEL_MAJOR" -ne 6 ]; then
     print_error "$(msg err_kernel_major "$KERNEL_FULL")"
 fi
@@ -241,15 +246,6 @@ TARBALL_URL="https://github.com/strongtz/i915-sriov-dkms/archive/refs/tags/$BRAN
 run_with_spinner "$(msg step_download "$BRANCH")" curl -fsSL "$TARBALL_URL" -o "$WORK_DIR/i915-sriov-dkms.tar.gz"
 tar -xzf "$WORK_DIR/i915-sriov-dkms.tar.gz" -C "$WORK_DIR"
 cp -a "$WORK_DIR/i915-sriov-dkms-$BRANCH/." /usr/src/i915-sriov-dkms-"$BRANCH"
-
-patch_source() {
-    local target="/usr/src/i915-sriov-dkms-$BRANCH/drivers/gpu/drm/i915/display/dvo_ch7017.c"
-    if [ -f "$target" ] && ! grep -q '#include <linux/i2c.h>' "$target"; then
-        sed -i '0,/#include/{s|#include|#include <linux/i2c.h>\n#include|}' "$target"
-    fi
-    return 0
-}
-run_with_spinner "$(msg step_patch)" patch_source
 
 run_with_spinner "$(msg step_dkms_add)" dkms add -m i915-sriov-dkms -v "$BRANCH"
 run_with_spinner "$(msg step_dkms_build)" dkms build -m i915-sriov-dkms -v "$BRANCH"

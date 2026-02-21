@@ -21,7 +21,7 @@ If your VPS is running **Windows**, this script is not applicable. Please downlo
 | Requirement | Detail |
 |---|---|
 | **OS** | Ubuntu 24.04 (or other APT-based distributions) |
-| **Kernel** | Linux 6.8 – 6.19 |
+| **Kernel** | Linux 6.8 – 6.19 (standard generic/amd64; cloud variants are **not** supported) |
 | **GPU** | Intel integrated/discrete GPU (vendor `8086`) must be present |
 | **Privileges** | Root (`sudo`) |
 | **Network** | Internet access (for package installation and source retrieval) |
