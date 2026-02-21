@@ -72,6 +72,8 @@ msg() {
                 || echo "Compiling kernel driver module (estimated 3–5 min)" ;;
         step_dkms_install)
             [[ "$LANG_CHOICE" == "zh" ]] && echo "安装 DKMS 驱动模块" || echo "Installing DKMS driver module" ;;
+        step_patch)
+            [[ "$LANG_CHOICE" == "zh" ]] && echo "修补源码兼容性补丁" || echo "Applying source compatibility patches" ;;
         step_initramfs)
             [[ "$LANG_CHOICE" == "zh" ]] && echo "重建 initramfs 引导镜像" || echo "Rebuilding initramfs boot image" ;;
         warn_dkms_cleanup)
@@ -239,6 +241,15 @@ cd "$WORK_DIR"
 run_with_spinner "$(msg step_clone "$BRANCH")" git clone -b "$BRANCH" https://github.com/strongtz/i915-sriov-dkms.git
 cd i915-sriov-dkms
 cp -a . /usr/src/i915-sriov-dkms-"$BRANCH"
+
+patch_source() {
+    local target="/usr/src/i915-sriov-dkms-$BRANCH/drivers/gpu/drm/i915/display/dvo_ch7017.c"
+    if [ -f "$target" ] && ! grep -q '#include <linux/i2c.h>' "$target"; then
+        sed -i '/#include/a #include <linux/i2c.h>' "$target"
+    fi
+    return 0
+}
+run_with_spinner "$(msg step_patch)" patch_source
 
 run_with_spinner "$(msg step_dkms_add)" dkms add -m i915-sriov-dkms -v "$BRANCH"
 run_with_spinner "$(msg step_dkms_build)" dkms build -m i915-sriov-dkms -v "$BRANCH"
