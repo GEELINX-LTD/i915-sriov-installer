@@ -45,6 +45,8 @@ msg() {
             [[ "$LANG_CHOICE" == "zh" ]] && echo "失败" || echo "failed" ;;
         log_detail)
             [[ "$LANG_CHOICE" == "zh" ]] && echo "详细日志: $LOG_FILE" || echo "Details: $LOG_FILE" ;;
+        err_build_log_hint)
+            [[ "$LANG_CHOICE" == "zh" ]] && echo "DKMS 编译日志:" || echo "DKMS build log:" ;;
         info_kernel)
             [[ "$LANG_CHOICE" == "zh" ]] && echo "当前内核版本: ${C_BOLD}$1${C_RESET}" \
                 || echo "Kernel version: ${C_BOLD}$1${C_RESET}" ;;
@@ -117,7 +119,20 @@ print_banner() {
 
 print_info()    { echo -e "  ${C_BLUE}[ ℹ ]${C_RESET} $1"; }
 print_warn()    { echo -e "  ${C_YELLOW}[ ⚠ ]${C_RESET} $1"; }
-print_error()   { echo -e "  ${C_RED}[ ✖ ]${C_RESET} $1"; echo -e "        ${C_DIM}$(msg log_detail)${C_RESET}"; exit 1; }
+print_error()   {
+    echo -e "  ${C_RED}[ ✖ ]${C_RESET} $1"
+    echo -e "        ${C_DIM}$(msg log_detail)${C_RESET}"
+    if [ -n "$2" ] && [ -f "$2" ]; then
+        echo ""
+        echo -e "  ${C_DIM}$(msg err_build_log_hint)${C_RESET}"
+        echo -e "  ${C_DIM}────────────────────────────────────────${C_RESET}"
+        tail -30 "$2" | while IFS= read -r line; do
+            echo -e "  ${C_DIM}  $line${C_RESET}"
+        done
+        echo -e "  ${C_DIM}────────────────────────────────────────${C_RESET}"
+    fi
+    exit 1
+}
 print_success() { echo -e "  ${C_GREEN}[ ✔ ]${C_RESET} $1"; }
 
 run_with_spinner() {
@@ -145,7 +160,9 @@ run_with_spinner() {
     if [ $exit_code -eq 0 ]; then
         print_success "$msg_text"
     else
-        print_error "$msg_text $(msg err_fail_suffix)"
+        local make_log
+        make_log=$(find /var/lib/dkms/i915-sriov-dkms/ -name "make.log" -type f 2>/dev/null | head -1)
+        print_error "$msg_text $(msg err_fail_suffix)" "$make_log"
     fi
     return $exit_code
 }
