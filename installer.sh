@@ -32,6 +32,18 @@ msg() {
         err_apt)
             [[ "$LANG_CHOICE" == "zh" ]] && echo "不受支持的发行版。此工具仅适用于基于 APT 的系统 (Ubuntu / Debian)。" \
                 || echo "Unsupported distribution. This tool requires an APT-based system (Ubuntu / Debian)." ;;
+        err_os_ubuntu)
+            [[ "$LANG_CHOICE" == "zh" ]] && echo "Ubuntu 需为 24.04 或更高版本 (当前: $1)。" \
+                || echo "Ubuntu must be 24.04 or newer (current: $1)." ;;
+        err_os_debian)
+            [[ "$LANG_CHOICE" == "zh" ]] && echo "Debian 需为 13 或更高版本 (当前: $1)。" \
+                || echo "Debian must be 13 or newer (current: $1)." ;;
+        err_os_unsupported)
+            [[ "$LANG_CHOICE" == "zh" ]] && echo "不受支持的操作系统 ($1)。仅支持 Ubuntu >= 24.04 或 Debian >= 13。" \
+                || echo "Unsupported OS ($1). Only Ubuntu >= 24.04 or Debian >= 13 are supported." ;;
+        err_os_unknown)
+            [[ "$LANG_CHOICE" == "zh" ]] && echo "无法检测操作系统版本。" \
+                || echo "Cannot detect OS version." ;;
         err_no_intel_gpu)
             [[ "$LANG_CHOICE" == "zh" ]] && echo "未检测到 Intel 显卡。此工具需要 Intel 集成/独立 GPU (vendor 8086)。" \
                 || echo "No Intel GPU detected. This tool requires an Intel integrated/discrete GPU (vendor 8086)." ;;
@@ -192,6 +204,25 @@ fi
 
 if ! command -v apt &> /dev/null; then
     print_error "$(msg err_apt)"
+fi
+
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    if [ "$ID" == "ubuntu" ]; then
+        UBUNTU_MAJOR=$(echo "$VERSION_ID" | cut -d'.' -f1)
+        if [ -z "$UBUNTU_MAJOR" ] || [ "$UBUNTU_MAJOR" -lt 24 ]; then
+            print_error "$(msg err_os_ubuntu "$VERSION_ID")"
+        fi
+    elif [ "$ID" == "debian" ]; then
+        DEBIAN_MAJOR=$(echo "$VERSION_ID" | cut -d'.' -f1)
+        if [ -z "$DEBIAN_MAJOR" ] || [ "$DEBIAN_MAJOR" -lt 13 ]; then
+            print_error "$(msg err_os_debian "$VERSION_ID")"
+        fi
+    else
+        print_error "$(msg err_os_unsupported "$ID")"
+    fi
+else
+    print_error "$(msg err_os_unknown)"
 fi
 
 INTEL_GPU_COUNT=$(lspci -nn 2>/dev/null | grep -iE "vga|display|3d" | grep -c "\[8086:" || true)
