@@ -1,13 +1,20 @@
 # i915-sriov-installer
 
-One-click Intel i915 SR-IOV vGPU driver installer for Ubuntu VPS instances.  
-Supports **English** and **中文** interface.
+**[中文文档](README_zh.md)**
+
+One-click Intel i915 SR-IOV vGPU driver installer for Linux VPS instances.
 
 ## Background
 
 Modern Intel CPUs with Xe integrated graphics support **SR-IOV** (Single Root I/O Virtualization), allowing a single physical GPU to be partitioned into multiple virtual GPUs (vGPUs) and assigned to virtual machines. This is critical for VPS providers who allocate GPU resources — typically up to **7 vGPUs per host** — to tenants for hardware-accelerated video encoding/decoding and compute workloads.
 
 However, tenants who manually install or misconfigure GPU drivers inside their VMs risk **addressing the host GPU directly**, which can cause the host machine to **lock up or crash**, affecting all co-located VMs. This installer eliminates that risk by providing a pre-validated, automated deployment path.
+
+## Windows Users
+
+If your VPS is running **Windows**, this script is not applicable. Please download and install the official Intel GPU driver directly:
+
+👉 **[Intel Graphics Driver for Windows (101.7084)](https://downloadmirror.intel.com/873460/gfx_win_101.7084.exe)**
 
 ## Requirements
 
@@ -24,9 +31,6 @@ However, tenants who manually install or misconfigure GPU drivers inside their V
 ```bash
 sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/GEELINX-LTD/i915-sriov-installer/main/installer.sh)"
 ```
-
-> [!NOTE]
-> Replace the URL above with your actual repository URL if different.
 
 ## What It Does
 
@@ -67,4 +71,4 @@ All build output is written to `/tmp/vgpu_deploy.log`. If the installer encounte
 
 ## License
 
-[MIT](LICENSE)
+This project is licensed under the [GNU General Public License v2.0](LICENSE), consistent with the upstream [i915-sriov-dkms](https://github.com/strongtz/i915-sriov-dkms) project.
